@@ -3,9 +3,10 @@ import { getCollectionData } from '@/lib/mongodb';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { collection: string } }
+  context: { params: Promise<{ collection: string }> }
 ) {
   try {
+    const params = await context.params;
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');

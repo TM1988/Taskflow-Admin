@@ -496,109 +496,24 @@ export default function LandingPage() {
 
       {/* Testimonials Section */}
       <section id="testimonials" className="container mx-auto max-w-7xl py-20 px-6 bg-muted/30">
-        <div className="max-w-3xl space-y-4 mb-16 ml-16">
-          <div className="animate-fade-in-up">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="animate-fade-in-up mb-6">
             <h2 className="font-bold text-3xl leading-[1.1] sm:text-4xl md:text-5xl">
-              Trusted by Developers
+              Reviews Coming Soon
             </h2>
           </div>
           <div className="animate-fade-in-up animation-delay-200">
-            <p className="leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              See what developers are saying about Taskflow Admin
-            </p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 ml-16">
-          <Card className="group transition-all duration-300 hover:scale-105 hover:shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i}>⭐</span>
-                  ))}
-                </div>
-              </div>
-              <p className="text-muted-foreground mb-4 italic">
-                "Taskflow Admin saved us months of development time. The MongoDB auto-discovery feature 
-                is incredible - we had a full admin panel up and running in under an hour."
+            <Card className="p-12">
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                We&apos;re just getting started! User reviews and testimonials will be added here as developers 
+                start using Taskflow Admin. Be one of the first to try it out and share your experience.
               </p>
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                  J
-                </div>
-                <div className="ml-3">
-                  <p className="font-semibold">Jessica Liu</p>
-                  <p className="text-sm text-muted-foreground">CTO, CloudScale</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group transition-all duration-300 hover:scale-105 hover:shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i}>⭐</span>
-                  ))}
-                </div>
-              </div>
-              <p className="text-muted-foreground mb-4 italic">
-                "The RBAC system is incredibly powerful yet simple to configure. 
-                We manage multiple tenants with different permission levels seamlessly."
-              </p>
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                  R
-                </div>
-                <div className="ml-3">
-                  <p className="font-semibold">Robert Kim</p>
-                  <p className="text-sm text-muted-foreground">Lead Engineer, DataFlow</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group transition-all duration-300 hover:scale-105 hover:shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i}>⭐</span>
-                  ))}
-                </div>
-              </div>
-              <p className="text-muted-foreground mb-4 italic">
-                "Being open source and self-hostable was crucial for our compliance requirements. 
-                Taskflow Admin checked all the boxes while being completely free."
-              </p>
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold">
-                  E
-                </div>
-                <div className="ml-3">
-                  <p className="font-semibold">Emily Torres</p>
-                  <p className="text-sm text-muted-foreground">DevOps Lead, SecureApp</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-12 max-w-2xl ml-16">
-          <Card>
-            <CardContent className="p-8">
-              <h3 className="text-xl font-semibold mb-4">Join Thousands of Developers</h3>
-              <p className="text-muted-foreground mb-6">
-                Start building your admin panel today and experience the power of Taskflow Admin.
-              </p>
-              <Button size="lg" onClick={handleGetStarted} className="bg-foreground hover:bg-foreground/90 text-background">
+              <Button size="lg" onClick={handleGetStarted} className="mt-8 bg-foreground hover:bg-foreground/90 text-background">
                 Get Started Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            </CardContent>
-          </Card>
+            </Card>
+          </div>
         </div>
       </section>
 

@@ -5,9 +5,10 @@ import { ObjectId } from 'mongodb';
 // Create document
 export async function POST(
   request: NextRequest,
-  { params }: { params: { collection: string } }
+  context: { params: Promise<{ collection: string }> }
 ) {
   try {
+    const params = await context.params;
     const body = await request.json();
     const result = await insertDocument(params.collection, body);
     return NextResponse.json({ success: true, id: result.insertedId });
@@ -22,9 +23,10 @@ export async function POST(
 // Update document
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { collection: string } }
+  context: { params: Promise<{ collection: string }> }
 ) {
   try {
+    const params = await context.params;
     const body = await request.json();
     const { _id, bulk, filter, ...update } = body;
     
@@ -57,9 +59,10 @@ export async function PUT(
 // Delete document
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { collection: string } }
+  context: { params: Promise<{ collection: string }> }
 ) {
   try {
+    const params = await context.params;
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
     const bulk = searchParams.get('bulk') === 'true';

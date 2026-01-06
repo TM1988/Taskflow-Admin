@@ -198,29 +198,35 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-start">
-                <Database className="h-5 w-5 mb-2" />
-                <span className="font-medium">Create Dashboard</span>
-                <span className="text-xs text-muted-foreground mt-1">
-                  Build a custom dashboard with drag-and-drop blocks
-                </span>
-              </Button>
+              <Link href="/dashboard/builder">
+                <Button variant="outline" className="h-auto py-4 flex flex-col items-start w-full">
+                  <Database className="h-5 w-5 mb-2" />
+                  <span className="font-medium">Create Dashboard</span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Build a custom dashboard with drag-and-drop blocks
+                  </span>
+                </Button>
+              </Link>
               
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-start">
-                <Activity className="h-5 w-5 mb-2" />
-                <span className="font-medium">View Analytics</span>
-                <span className="text-xs text-muted-foreground mt-1">
-                  Analyze your data with charts and KPIs
-                </span>
-              </Button>
+              <Link href="/dashboard/audit-logs">
+                <Button variant="outline" className="h-auto py-4 flex flex-col items-start w-full">
+                  <Activity className="h-5 w-5 mb-2" />
+                  <span className="font-medium">View Audit Logs</span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Track all administrative actions and changes
+                  </span>
+                </Button>
+              </Link>
               
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-start">
-                <Users className="h-5 w-5 mb-2" />
-                <span className="font-medium">Manage Access</span>
-                <span className="text-xs text-muted-foreground mt-1">
-                  Configure roles and permissions
-                </span>
-              </Button>
+              <Link href="/dashboard/settings">
+                <Button variant="outline" className="h-auto py-4 flex flex-col items-start w-full">
+                  <Users className="h-5 w-5 mb-2" />
+                  <span className="font-medium">Manage Access</span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Configure roles and permissions
+                  </span>
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
