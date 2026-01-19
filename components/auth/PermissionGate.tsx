@@ -62,3 +62,4 @@ export function usePermission(resource: string, action: Action) {
 
   return { allowed, loading };
 }
+

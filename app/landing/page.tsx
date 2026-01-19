@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -52,11 +54,15 @@ export default function LandingPage() {
   };
 
   const handleGetStarted = () => {
-    router.push("/dashboard");
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      router.push("/auth/login");
+    }
   };
 
   const handleWatchDemo = () => {
-    router.push("/demo");
+    router.push("/onboarding");
   };
 
   const features = [
@@ -204,9 +210,6 @@ export default function LandingPage() {
         <div className="container mx-auto max-w-7xl flex h-14 items-center justify-between px-6">
           {/* Left Section: Logo */}
           <div className="flex items-center space-x-3 flex-shrink-0">
-            <div className="w-6 h-6 bg-foreground rounded-sm flex items-center justify-center">
-              <Database className="h-4 w-4 text-background" />
-            </div>
             <span className="font-semibold text-base tracking-tight">Taskflow Admin</span>
           </div>
           
@@ -215,18 +218,18 @@ export default function LandingPage() {
             <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">Features</button>
             <button onClick={() => scrollToSection('use-cases')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">Use Cases</button>
             <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">Pricing</button>
-            <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">About</button>
+            <button onClick={() => scrollToSection('testimonials')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">Reviews</button>
           </div>
           
           {/* Right Section: Theme Toggle & Dashboard Button */}
           <div className="flex items-center space-x-3 flex-shrink-0">
             <ThemeToggle />
             <Button 
-              onClick={() => router.push("/dashboard")} 
+              onClick={() => router.push(user ? "/dashboard" : "/auth/login")} 
               size="sm"
               className="bg-foreground hover:bg-foreground/90 text-background font-medium px-4 py-2 h-8 text-sm rounded-md transition-colors duration-200"
             >
-              Get Started
+              {user ? "Dashboard" : "Get Started"}
             </Button>
           </div>
         </div>
@@ -259,18 +262,14 @@ export default function LandingPage() {
         
         <div className="animate-fade-in-up animation-delay-600 flex flex-col gap-4 sm:flex-row ml-16">
           <Button size="lg" onClick={handleGetStarted} className="group transition-all duration-300 hover:scale-105 hover:shadow-lg bg-foreground hover:bg-foreground/90 text-background">
-            Get Started
+            {user ? "Go to Dashboard" : "Get Started"}
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
-          <Button size="lg" variant="outline" onClick={handleWatchDemo} className="group transition-all duration-300 hover:scale-105 hover:shadow-lg">
-            <Play className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-            See Demo
           </Button>
         </div>
       </section>
 
       {/* Scrolling Features Section */}
-      <section className="py-20 bg-muted/30 overflow-hidden relative">
+      <section className="py-20 overflow-hidden relative">
         <div className="container mx-auto max-w-7xl text-center mb-12 px-4">
           <h2 className="text-3xl font-bold mb-4">Powerful Admin Tools</h2>
           <p className="text-muted-foreground">Everything you need to manage your data effectively</p>
@@ -362,7 +361,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container mx-auto max-w-7xl space-y-12 py-20 px-6">
+      <section id="features" className="container mx-auto max-w-7xl space-y-12 py-20 px-6 border-t border-border/40">
         <div className="max-w-3xl space-y-4 ml-16">
           <div className="animate-fade-in-up">
             <h2 className="font-bold text-3xl leading-[1.1] sm:text-4xl md:text-5xl">
@@ -399,7 +398,7 @@ export default function LandingPage() {
       </section>
 
       {/* Use Cases Section */}
-      <section id="use-cases" className="container mx-auto max-w-7xl py-20 px-6 bg-muted/30">
+      <section id="use-cases" className="container mx-auto max-w-7xl py-20 px-6 border-t border-border/40">
         <div className="max-w-3xl space-y-4 mb-16 ml-16">
           <div className="animate-fade-in-up">
             <h2 className="font-bold text-3xl leading-[1.1] sm:text-4xl md:text-5xl">
@@ -430,72 +429,53 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="container mx-auto max-w-7xl py-20 px-6">
-        <div className="max-w-3xl space-y-4 mb-16 text-center mx-auto">
+      <section id="pricing" className="container mx-auto max-w-7xl py-20 px-6 border-t border-border/40">
+        <div className="max-w-2xl space-y-3 mb-12 text-center mx-auto">
           <div className="animate-fade-in-up">
             <h2 className="font-bold text-3xl leading-[1.1] sm:text-4xl md:text-5xl">
-              Simple Pricing
+              Pricing
             </h2>
           </div>
           <div className="animate-fade-in-up animation-delay-200">
-            <p className="leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              No hidden costs, no subscriptions, no limits. Taskflow Admin is completely free and open source.
+            <p className="leading-normal text-muted-foreground sm:text-lg">
+              Free and open source, forever.
             </p>
           </div>
         </div>
         
-        <div className="max-w-lg animate-fade-in-up animation-delay-400 mx-auto">
-          <Card className="relative group transition-all duration-300 hover:scale-105 hover:shadow-2xl border-2 hover:border-foreground/30">
-            <Badge className="absolute -top-3 left-6 bg-foreground text-background" variant="default">
-              100% Free & Open Source
+        <div className="max-w-md animate-fade-in-up animation-delay-400 mx-auto">
+          <Card className="relative group transition-all duration-300 hover:shadow-xl border-2">
+            <Badge className="absolute -top-2 left-4 bg-foreground text-background text-xs" variant="default">
+              Open Source
             </Badge>
-            <CardHeader className="pt-8 text-center">
-              <CardTitle className="text-3xl group-hover:text-foreground transition-colors duration-300">Free Forever</CardTitle>
-              <div className="text-5xl font-bold">$0</div>
-              <CardDescription className="text-lg">
-                Everything you need for powerful admin panels
-              </CardDescription>
+            <CardHeader className="pt-6 pb-3 text-center">
+              <CardTitle className="text-2xl">Free Forever</CardTitle>
+              <div className="text-4xl font-bold">$0</div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-4">
+            <CardContent className="space-y-3 pb-6">
+              <ul className="space-y-2">
                 {pricingPlan.features.map((feature, index) => (
-                  <li key={index} className="flex items-center animate-fade-in-up" style={{animationDelay: `${(index + 6) * 50}ms`}}>
+                  <li key={index} className="flex items-center text-sm">
                     {feature.startsWith('❌') ? (
-                      <span className="mr-3 h-5 w-5 text-red-600 flex-shrink-0">❌</span>
+                      <span className="mr-2 h-4 w-4 text-red-600 flex-shrink-0">❌</span>
                     ) : (
-                      <CheckCircle className="mr-3 h-5 w-5 text-green-600 flex-shrink-0" />
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-600 flex-shrink-0" />
                     )}
-                    <span className="text-sm">{feature.replace('❌ ', '')}</span>
+                    <span>{feature.replace('❌ ', '')}</span>
                   </li>
                 ))}
               </ul>
-              <Button className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-lg bg-foreground hover:bg-foreground/90 text-background" onClick={handleGetStarted}>
-                Start Building Your Admin Panel
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Button className="w-full mt-4 bg-foreground hover:bg-foreground/90 text-background" onClick={handleGetStarted}>
+                Get Started
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Why Free Section */}
-        <div id="about" className="mt-16 max-w-3xl animate-fade-in-up animation-delay-600 mx-auto">
-          <Card className="group transition-all duration-300 hover:scale-105 hover:shadow-xl border-2 hover:border-foreground/20">
-            <CardHeader>
-              <CardTitle className="text-2xl group-hover:text-foreground transition-colors duration-300">Why is Taskflow Admin Free?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed text-lg">
-                We believe powerful admin tools should be accessible to everyone. 
-                Taskflow Admin is open source because we want to empower developers worldwide to build 
-                better applications without barriers. No subscriptions, no hidden fees, no limits - just powerful tools for everyone.
-              </p>
             </CardContent>
           </Card>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="container mx-auto max-w-7xl py-20 px-6 bg-muted/30">
+      <section id="testimonials" className="container mx-auto max-w-7xl py-20 px-6 border-t border-border/40">
         <div className="max-w-3xl mx-auto text-center">
           <div className="animate-fade-in-up mb-6">
             <h2 className="font-bold text-3xl leading-[1.1] sm:text-4xl md:text-5xl">

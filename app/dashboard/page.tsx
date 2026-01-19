@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Database, Plus, TrendingUp, Users, Activity } from "lucide-react";
+import { UserMenu } from "@/components/dashboard/UserMenu";
+import { LoadingSpinner } from "@/components/ui/loading";
+import { CreateCollectionDialog } from "@/components/dashboard/CreateCollectionDialog";
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 
 interface Collection {
@@ -17,15 +21,24 @@ export default function DashboardPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, organization } = useAuth();
 
   useEffect(() => {
     fetchCollections();
-  }, []);
+  }, [user, organization]);
 
   const fetchCollections = async () => {
+    if (!user || !organization) return;
+    
     try {
       setLoading(true);
-      const res = await fetch('/api/collections');
+      // Fetch organization-specific collections
+      const res = await fetch('/api/user-collections', {
+        headers: {
+          'x-org-id': organization.id
+        }
+      });
+      
       if (!res.ok) throw new Error('Failed to fetch collections');
       const data = await res.json();
       setCollections(data.collections || []);
@@ -48,11 +61,21 @@ export default function DashboardPage() {
             <Database className="h-6 w-6" />
             <h1 className="text-2xl font-bold">Taskflow Admin</h1>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button onClick={() => window.location.href = '/dashboard/builder'}>
+          <div className="flex items-center gap-2">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => organization && (window.location.href = `/${organization.slug}/demo`)}
+            >
+              <TrendingUp className="mr-2 h-4 w-4" />
+              See Demo
+            </Button>
+            <CreateCollectionDialog onCollectionCreated={fetchCollections} />
+            <Button size="sm" onClick={() => window.location.href = '/dashboard/builder'}>
               <Plus className="mr-2 h-4 w-4" />
               New Dashboard
             </Button>
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -141,9 +164,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground">Loading collections...</p>
-              </div>
+              <LoadingSpinner message="Loading collections..." />
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-8 space-y-4">
                 <p className="text-destructive">{error}</p>

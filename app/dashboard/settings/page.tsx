@@ -16,6 +16,7 @@ import {
 import { Role } from "@/types/rbac";
 import { Loader2, Shield, Plus, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import {
   Dialog,
   DialogContent,
@@ -102,18 +103,13 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8" />
-            Settings & Access Control
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage roles, permissions, and access control
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Settings & Access Control"
+        description="Manage roles, permissions, and access control"
+        icon={<Shield className="h-6 w-6" />}
+      />
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
 
         {/* User Info */}
         {user && (
@@ -271,3 +267,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

@@ -12,9 +12,11 @@ import {
 import { signInWithGoogle, signInWithGithub } from "@/services/auth/firebase";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { Organization } from "@/types/organization";
 
 interface AuthContextType {
   user: User | null;
+  organization: Organization | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName?: string) => Promise<void>;
@@ -22,6 +24,7 @@ interface AuthContextType {
   updateProfile: (profileData: { displayName?: string; photoURL?: string }) => Promise<void>;
   signInWithGoogleProvider: () => Promise<void>;
   signInWithGithubProvider: () => Promise<void>;
+  refreshOrganization: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,8 +33,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const fetchOrganization = async (userId: string) => {
+    try {
+      const response = await fetch('/api/organizations', {
+        headers: {
+          'x-user-id': userId
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOrganization(data.organization || null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch organization:', error);
+      setOrganization(null);
+    }
+  };
+
+  const refreshOrganization = async () => {
+    if (!user) return;
+    await fetchOrganization(user.uid);
+  };
 
   useEffect(() => {
     console.log("AuthProvider: Setting up auth state listener");
@@ -42,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (currentUser) {
       console.log("Current user found immediately");
       setUser(currentUser);
-      setLoading(false);
+      fetchOrganization(currentUser.uid);
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -51,7 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (firebaseUser) {
         console.log("User signed in:", firebaseUser.uid);
         setUser(firebaseUser);
-        
+
+        // Fetch user's organization
+        await fetchOrganization(firebaseUser.uid);
+
         // Create/update user profile in Firestore
         try {
           await fetch('/api/auth/register', {
@@ -72,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         console.log("User signed out");
         setUser(null);
+        setOrganization(null);
       }
       
       setLoading(false);
@@ -85,7 +116,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      // Fetch organization first
+      await fetchOrganization(result.user.uid);
+      // Routing is now handled by home page based on org status
       router.push("/");
     } catch (error: any) {
       console.error("Error signing in:", error);
@@ -94,32 +128,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error.code === 'auth/user-not-found') {
         throw new Error("This account doesn't exist. Please create an account first.");
       } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-        // For invalid credentials, we need to be careful not to reveal if email exists
-        // But we can still provide helpful guidance
         throw new Error("Invalid email or password. Please check your credentials or create an account if you don't have one.");
       } else if (error.code === 'auth/invalid-email') {
         throw new Error("Please enter a valid email address.");
       } else if (error.code === 'auth/user-disabled') {
         throw new Error("This account has been disabled. Please contact support.");
-      } else if (error.code === 'auth/too-many-requests') {
-        throw new Error("Too many failed attempts. Please try again later.");
       } else {
-        // For any other error, suggest account creation as a possibility
-        throw new Error("Unable to sign in. Please check your credentials or create an account if you don't have one.");
+        throw new Error(error.message || "Failed to sign in. Please try again.");
       }
     }
   };
 
   const register = async (email: string, password: string, displayName?: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
       
       // Update profile with display name
       if (displayName) {
         await updateFirebaseProfile(auth.currentUser as User, { displayName });
       }
       
-      router.push("/");
+      // New users don't have org, send to onboarding
+      router.push("/onboarding");
     } catch (error: any) {
       console.error("Error signing up:", error);
       
@@ -133,7 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else if (error.code === 'auth/operation-not-allowed') {
         throw new Error("Email/password accounts are not enabled. Please contact support.");
       } else {
-        throw new Error("Failed to create account. Please try again.");
+        throw new Error(error.message || "Failed to create account. Please try again.");
       }
     }
   };
@@ -142,8 +172,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setLoading(true);
       
-      // Clear user state BEFORE Firebase signOut
+      // Clear user and org state BEFORE Firebase signOut
       setUser(null);
+      setOrganization(null);
       
       // Sign out from Firebase
       await signOut(auth);
@@ -162,6 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Logout error:', error);
       // Even if logout fails, clear local state
       setUser(null);
+      setOrganization(null);
       window.location.href = '/auth/login';
     } finally {
       setLoading(false);
@@ -206,6 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const value = {
     user,
+    organization,
     loading,
     login,
     register,
@@ -213,6 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     updateProfile,
     signInWithGoogleProvider,
     signInWithGithubProvider,
+    refreshOrganization
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

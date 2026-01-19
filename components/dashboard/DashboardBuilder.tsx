@@ -19,30 +19,30 @@ import { Label } from "@/components/ui/label";
 import { TableBlock, KPIBlock, ChartBlock, FormBlock } from "@/components/blocks";
 import { PlusCircle, Save, Trash2, Edit, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { dashboardService, BlockConfig as ServiceBlockConfig } from "@/services/dashboard/dashboard-service";
+import { PageHeader } from "./PageHeader";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-interface BlockConfig {
-  i: string;
-  type: "table" | "kpi" | "chart" | "form";
-  collection: string;
-  title?: string;
-  field?: string;
-  aggregation?: string;
-  chartType?: string;
-}
+type BlockConfig = ServiceBlockConfig;
 
 interface DashboardBuilderProps {
   dashboardId?: string;
+  dashboardName?: string;
 }
 
-export function DashboardBuilder({ dashboardId }: DashboardBuilderProps) {
+export function DashboardBuilder({ dashboardId, dashboardName = "My Dashboard" }: DashboardBuilderProps) {
   const [layouts, setLayouts] = useState<{ [key: string]: Layout[] }>({ lg: [] });
   const [blocks, setBlocks] = useState<BlockConfig[]>([]);
   const [collections, setCollections] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [currentDashboardId, setCurrentDashboardId] = useState<string | undefined>(dashboardId);
+  const [currentDashboardName, setCurrentDashboardName] = useState(dashboardName);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user, organization } = useAuth();
   const router = useRouter();
 
   // New block form state
@@ -58,8 +58,14 @@ export function DashboardBuilder({ dashboardId }: DashboardBuilderProps) {
   useEffect(() => {
     // Fetch available collections
     const fetchCollections = async () => {
+      if (!user || !organization) return;
+      
       try {
-        const response = await fetch("/api/collections");
+        const response = await fetch("/api/user-collections", {
+          headers: {
+            'x-org-id': organization.id
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           setCollections(data.collections?.map((c: any) => c.name) || []);
@@ -71,35 +77,75 @@ export function DashboardBuilder({ dashboardId }: DashboardBuilderProps) {
     fetchCollections();
 
     // Load saved dashboard if dashboardId provided
-    if (dashboardId) {
+    if (dashboardId && user) {
       loadDashboard(dashboardId);
     }
-  }, [dashboardId]);
+  }, [dashboardId, user]);
 
   const loadDashboard = async (id: string) => {
-    // TODO: Load from Firestore
-    console.log("Loading dashboard:", id);
+    try {
+      const dashboard = await dashboardService.loadDashboard(id);
+      if (dashboard) {
+        setLayouts(dashboard.layouts);
+        setBlocks(dashboard.blocks);
+        setCurrentDashboardId(dashboard.id);
+        setCurrentDashboardName(dashboard.name);
+        toast({
+          title: "Dashboard loaded",
+          description: `Loaded "${dashboard.name}" successfully`
+        });
+      } else {
+        toast({
+          title: "Dashboard not found",
+          description: "The dashboard could not be found",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load dashboard:", error);
+      toast({
+        title: "Load failed",
+        description: "Failed to load dashboard",
+        variant: "destructive"
+      });
+    }
   };
 
   const saveDashboard = async () => {
+    if (!user) {
+      toast({
+        title: "Not authenticated",
+        description: "Please log in to save dashboards",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
     try {
-      // TODO: Save to Firestore
-      const dashboardData = {
+      const dashboardId = await dashboardService.saveDashboard(user.uid, {
+        id: currentDashboardId,
+        name: currentDashboardName,
         layouts,
         blocks,
-        updatedAt: new Date().toISOString()
-      };
+        isDefault: !currentDashboardId // First dashboard is default
+      });
+      
+      setCurrentDashboardId(dashboardId);
       
       toast({
         title: "Dashboard saved",
         description: "Your dashboard layout has been saved successfully"
       });
     } catch (err) {
+      console.error("Save error:", err);
       toast({
         title: "Save failed",
         description: "Failed to save dashboard",
         variant: "destructive"
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -196,29 +242,28 @@ export function DashboardBuilder({ dashboardId }: DashboardBuilderProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      {/* Toolbar */}
-      <div className="mb-6 flex items-center justify-between bg-card border rounded-lg p-4">
-        <div className="flex items-center gap-4">
-          <LayoutGrid className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Dashboard Builder</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant={isEditing ? "default" : "outline"}
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            {isEditing ? "Editing" : "Locked"}
-          </Button>
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Block
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+    <div className="min-h-screen bg-background">
+      <PageHeader
+        title={currentDashboardName}
+        description={currentDashboardId ? "Saved dashboard" : "Unsaved dashboard"}
+        icon={<LayoutGrid className="h-6 w-6" />}
+        actions={
+          <>
+            <Button 
+              variant={isEditing ? "default" : "outline"}
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              {isEditing ? "Editing" : "Locked"}
+            </Button>
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Block
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add New Block</DialogTitle>
                 <DialogDescription>
@@ -331,15 +376,17 @@ export function DashboardBuilder({ dashboardId }: DashboardBuilderProps) {
               </div>
             </DialogContent>
           </Dialog>
-          <Button onClick={saveDashboard}>
+          <Button onClick={saveDashboard} disabled={isSaving}>
             <Save className="h-4 w-4 mr-2" />
-            Save
+            {isSaving ? "Saving..." : "Save Dashboard"}
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      {/* Dashboard Grid */}
-      {blocks.length === 0 ? (
+      <div className="p-6">
+        {/* Dashboard Grid */}
+        {blocks.length === 0 ? (
         <Card className="p-12 text-center">
           <div className="flex flex-col items-center gap-4">
             <LayoutGrid className="h-16 w-16 text-muted-foreground" />
@@ -383,6 +430,7 @@ export function DashboardBuilder({ dashboardId }: DashboardBuilderProps) {
           ))}
         </ResponsiveGridLayout>
       )}
+      </div>
     </div>
   );
 }

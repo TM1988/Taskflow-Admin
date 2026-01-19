@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getAllAuditLogs, AuditLog } from "@/services/audit/audit-service";
 import { Loader2, FileSearch, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 export default function AuditLogsPage() {
   const { user } = useAuth();
@@ -43,23 +44,26 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <FileSearch className="h-6 w-6" />
-              Audit Logs
-            </CardTitle>
-            <CardDescription>
-              Track all administrative actions and changes
-            </CardDescription>
-          </div>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Audit Logs"
+        description="Track all administrative actions and changes"
+        icon={<FileSearch className="h-6 w-6" />}
+        actions={
           <Button onClick={fetchLogs} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-        </CardHeader>
+        }
+      />
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Activity Log</CardTitle>
+            <CardDescription>
+              All actions performed in the system
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center h-40">
@@ -126,6 +130,9 @@ export default function AuditLogsPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

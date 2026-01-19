@@ -71,10 +71,11 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await signInWithGoogleProvider();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Google sign in error:", error);
       toast({
         title: "Error",
-        description: "Failed to sign in with Google.",
+        description: error.message || "Failed to sign in with Google. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -86,10 +87,11 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await signInWithGithubProvider();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("GitHub sign in error:", error);
       toast({
         title: "Error",
-        description: "Failed to sign in with GitHub.",
+        description: error.message || "Failed to sign in with GitHub. Make sure you've configured the OAuth app correctly.",
         variant: "destructive",
       });
     } finally {

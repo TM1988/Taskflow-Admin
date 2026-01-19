@@ -5,3 +5,5 @@ import { DashboardBuilder } from "@/components/dashboard/DashboardBuilder";
 export default function DashboardBuilderPage() {
   return <DashboardBuilder />;
 }
+
+export const dynamic = 'force-dynamic';

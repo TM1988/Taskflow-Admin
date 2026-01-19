@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { TutorialProvider } from "@/contexts/TutorialContext";
+import { GlobalTutorialOverlay } from "@/components/onboarding/GlobalTutorialOverlay";
 
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
@@ -19,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -27,8 +29,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
-            <Toaster />
+            <TutorialProvider>
+              {children}
+              <GlobalTutorialOverlay />
+              <Toaster />
+            </TutorialProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

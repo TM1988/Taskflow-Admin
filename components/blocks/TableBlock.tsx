@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, RefreshCw } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Search, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExportButton } from "./ExportButton";
+import { ImportButton } from "./ImportButton";
 
 interface TableBlockProps {
   collection: string;
@@ -13,13 +22,30 @@ interface TableBlockProps {
   pageSize?: number;
 }
 
-export function TableBlock({ collection, title, pageSize = 10 }: TableBlockProps) {
+type SortDirection = 'asc' | 'desc' | null;
+
+export function TableBlock({ collection, title, pageSize: initialPageSize = 10 }: TableBlockProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(initialPageSize);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [columns, setColumns] = useState<string[]>([]);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1); // Reset to page 1 on new search
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -28,7 +54,9 @@ export function TableBlock({ collection, title, pageSize = 10 }: TableBlockProps
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pageSize.toString(),
-        ...(searchQuery && { search: searchQuery })
+        ...(debouncedSearch && { search: debouncedSearch }),
+        ...(sortColumn && { sortBy: sortColumn }),
+        ...(sortDirection && { sortOrder: sortDirection })
       });
       
       const response = await fetch(`/api/collections/${collection}?${params}`);
@@ -36,6 +64,7 @@ export function TableBlock({ collection, title, pageSize = 10 }: TableBlockProps
       
       const result = await response.json();
       setData(result.data || []);
+      setTotalCount(result.total || 0);
       
       // Extract column names from first document
       if (result.data && result.data.length > 0) {
@@ -54,11 +83,41 @@ export function TableBlock({ collection, title, pageSize = 10 }: TableBlockProps
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collection, page, searchQuery]);
+  }, [collection, page, debouncedSearch, sortColumn, sortDirection, pageSize]);
 
   const handleRefresh = () => {
     fetchData();
   };
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortColumn(null);
+        setSortDirection(null);
+      }
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+    setPage(1); // Reset to page 1 on sort change
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-3 w-3 ml-1 inline opacity-50" />;
+    }
+    if (sortDirection === 'asc') {
+      return <ArrowUp className="h-3 w-3 ml-1 inline" />;
+    }
+    return <ArrowDown className="h-3 w-3 ml-1 inline" />;
+  };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const startIndex = (page - 1) * pageSize + 1;
+  const endIndex = Math.min(page * pageSize, totalCount);
 
   const renderCellValue = (value: any) => {
     if (value === null || value === undefined) return "-";
@@ -83,6 +142,8 @@ export function TableBlock({ collection, title, pageSize = 10 }: TableBlockProps
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <ImportButton collection={collection} onImportComplete={handleRefresh} />
+          <ExportButton collection={collection} data={data} />
           <Button size="sm" variant="outline" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -103,8 +164,15 @@ export function TableBlock({ collection, title, pageSize = 10 }: TableBlockProps
               <TableHeader>
                 <TableRow>
                   {columns.map((col) => (
-                    <TableHead key={col} className="font-semibold">
-                      {col}
+                    <TableHead 
+                      key={col} 
+                      className="font-semibold cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort(col)}
+                    >
+                      <div className="flex items-center">
+                        {col}
+                        {getSortIcon(col)}
+                      </div>
                     </TableHead>
                   ))}
                 </TableRow>
@@ -121,24 +189,49 @@ export function TableBlock({ collection, title, pageSize = 10 }: TableBlockProps
                 ))}
               </TableBody>
             </Table>
-            <div className="flex items-center justify-between mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">Page {page}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => p + 1)}
-                disabled={data.length < pageSize}
-              >
-                Next
-              </Button>
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Rows per page:</span>
+                <Select value={pageSize.toString()} onValueChange={(v) => {
+                  setPageSize(Number(v));
+                  setPage(1);
+                }}>
+                  <SelectTrigger className="w-[70px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">
+                  {totalCount > 0 ? `${startIndex}-${endIndex} of ${totalCount}` : 'No data'}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm px-2">Page {page} of {totalPages || 1}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </>
         )}
