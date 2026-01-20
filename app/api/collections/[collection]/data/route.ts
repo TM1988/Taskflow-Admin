@@ -9,8 +9,18 @@ export async function POST(
 ) {
   try {
     const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    const fullCollectionName = `${orgId}_${params.collection}`;
     const body = await request.json();
-    const result = await insertDocument(params.collection, body);
+    const result = await insertDocument(fullCollectionName, body);
     return NextResponse.json({ success: true, id: result.insertedId });
   } catch (error: any) {
     return NextResponse.json(
@@ -27,17 +37,27 @@ export async function PUT(
 ) {
   try {
     const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    const fullCollectionName = `${orgId}_${params.collection}`;
     const body = await request.json();
     const { _id, bulk, filter, ...update } = body;
     
     if (bulk && filter) {
       // Bulk update
-      const result = await bulkUpdateDocuments(params.collection, filter, update);
+      const result = await bulkUpdateDocuments(fullCollectionName, filter, update);
       return NextResponse.json({ success: true, modifiedCount: result.modifiedCount });
     } else if (_id) {
       // Single update
       const result = await updateDocument(
-        params.collection,
+        fullCollectionName,
         { _id: new ObjectId(_id) },
         update
       );
@@ -63,6 +83,16 @@ export async function DELETE(
 ) {
   try {
     const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    const fullCollectionName = `${orgId}_${params.collection}`;
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
     const bulk = searchParams.get('bulk') === 'true';
@@ -70,12 +100,12 @@ export async function DELETE(
     
     if (bulk && filter) {
       // Bulk delete
-      const result = await bulkDeleteDocuments(params.collection, JSON.parse(filter));
+      const result = await bulkDeleteDocuments(fullCollectionName, JSON.parse(filter));
       return NextResponse.json({ success: true, deletedCount: result.deletedCount });
     } else if (id) {
       // Single delete
       const result = await deleteDocument(
-        params.collection,
+        fullCollectionName,
         { _id: new ObjectId(id) }
       );
       return NextResponse.json({ success: true, deletedCount: result.deletedCount });

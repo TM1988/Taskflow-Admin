@@ -8,9 +8,19 @@ export async function DELETE(
 ) {
   try {
     const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    const fullCollectionName = `${orgId}_${params.collection}`;
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB_NAME);
-    const collection = db.collection(params.collection);
+    const collection = db.collection(fullCollectionName);
 
     // Convert string ID to ObjectId if it's a valid ObjectId format
     let query: any = { _id: params.id };
@@ -46,9 +56,19 @@ export async function GET(
 ) {
   try {
     const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    const fullCollectionName = `${orgId}_${params.collection}`;
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB_NAME);
-    const collection = db.collection(params.collection);
+    const collection = db.collection(fullCollectionName);
 
     // Convert string ID to ObjectId if it's a valid ObjectId format
     let query: any = { _id: params.id };
@@ -81,10 +101,20 @@ export async function PUT(
 ) {
   try {
     const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    const fullCollectionName = `${orgId}_${params.collection}`;
     const body = await request.json();
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB_NAME);
-    const collection = db.collection(params.collection);
+    const collection = db.collection(fullCollectionName);
 
     // Remove _id from update body if present
     const { _id, ...updateData } = body;

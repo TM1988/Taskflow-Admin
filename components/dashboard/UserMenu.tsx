@@ -14,7 +14,7 @@ import { User, LogOut, Settings, UserCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, organization, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -39,11 +39,11 @@ export function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
+        <DropdownMenuItem onClick={() => organization && router.push(`/${organization.slug}/profile`)}>
           <UserCircle className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
+        <DropdownMenuItem onClick={() => router.push("/organizations/settings")}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>

@@ -29,6 +29,7 @@ export async function POST(
 
   try {
     const { collection } = params;
+    const fullCollectionName = `${orgId}_${collection}`;
     const body = await request.json();
     const { data } = body;
 
@@ -38,11 +39,6 @@ export async function POST(
         { status: 400 }
       );
     }
-
-    // Check if collection is org-scoped
-    const fullCollectionName = collection.startsWith(`${orgId}_`) 
-      ? collection 
-      : `${orgId}_${collection}`;
 
     await client.connect();
     const db = client.db(DB_NAME);

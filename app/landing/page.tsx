@@ -27,7 +27,7 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, organization, loading } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -225,7 +225,7 @@ export default function LandingPage() {
           <div className="flex items-center space-x-3 flex-shrink-0">
             <ThemeToggle />
             <Button 
-              onClick={() => router.push(user ? "/dashboard" : "/auth/login")} 
+              onClick={() => router.push(user && organization ? `/${organization.slug}/dashboard` : "/auth/login")} 
               size="sm"
               className="bg-foreground hover:bg-foreground/90 text-background font-medium px-4 py-2 h-8 text-sm rounded-md transition-colors duration-200"
             >
@@ -527,7 +527,7 @@ export default function LandingPage() {
                 <li><a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
                 <li><a href="#use-cases" className="text-muted-foreground hover:text-foreground transition-colors">Use Cases</a></li>
                 <li><a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</a></li>
+                <li><a href={user && organization ? `/${organization.slug}/dashboard` : "/auth/login"} className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</a></li>
                 <li><a href="/docs" className="text-muted-foreground hover:text-foreground transition-colors">Documentation</a></li>
               </ul>
             </div>

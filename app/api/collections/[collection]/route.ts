@@ -7,6 +7,18 @@ export async function GET(
 ) {
   try {
     const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    // Prefix collection name with org ID
+    const fullCollectionName = `${orgId}_${params.collection}`;
+    
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -40,7 +52,7 @@ export async function GET(
       }
     }
     
-    const result = await getCollectionData(params.collection, options);
+    const result = await getCollectionData(fullCollectionName, options);
     return NextResponse.json(result);
   } catch (error: any) {
     return NextResponse.json(

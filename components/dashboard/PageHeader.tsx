@@ -18,8 +18,8 @@ interface PageHeaderProps {
 export function PageHeader({ 
   title, 
   description, 
-  showBackButton = true,
-  backHref = "/dashboard",
+  showBackButton = false,
+  backHref,
   icon,
   actions 
 }: PageHeaderProps) {
@@ -29,7 +29,7 @@ export function PageHeader({
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center space-x-4">
-          {showBackButton && (
+          {showBackButton && backHref && (
             <Button
               variant="ghost"
               size="icon"
