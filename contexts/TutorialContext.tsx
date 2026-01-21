@@ -84,18 +84,6 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       },
     ];
 
-    // Admin and owner get additional steps
-    if (role === "admin" || role === "owner") {
-      baseSteps.push({
-        id: "create-collection",
-        title: "Create Collections",
-        description: "As an admin, you can create new collections and manage your data structure. Click here whenever you need to add a new collection.",
-        targetSelector: "[data-tutorial='create-collection']",
-        page: `/${orgSlug}`,
-        position: "bottom",
-      });
-    }
-
     // Demo dashboard (all roles)
     baseSteps.push({
       id: "demo-intro",
@@ -152,19 +140,19 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       baseSteps.push({
-        id: "invite-tab",
-        title: "Invite Team Members",
-        description: "Click on the Invite tab to see your organization's invite code. Share this code with team members so they can join.",
-        targetSelector: "[data-value='invite']",
+        id: "members-tab",
+        title: "Manage Members",
+        description: "The Members tab shows all users in your organization. You can manage their roles and remove members if needed.",
+        targetSelector: "[data-value='members']",
         page: "/organizations/settings",
         position: "bottom",
       });
 
       baseSteps.push({
-        id: "members-tab",
-        title: "Manage Members",
-        description: "The Members tab shows all users in your organization. You can manage their roles and remove members if needed.",
-        targetSelector: "[data-value='members']",
+        id: "invite-tab",
+        title: "Invite Team Members",
+        description: "Click on the Invite tab to see your organization's invite code. Share this code with team members so they can join.",
+        targetSelector: "[data-value='invite']",
         page: "/organizations/settings",
         position: "bottom",
       });
@@ -181,16 +169,27 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       baseSteps.push({
         id: "back-to-dashboard",
         title: "Back to Dashboard",
-        description: "Now let's go back to the dashboard to create some collections and dashboards. I'll take you there in 10 seconds.",
+        description: "Now let's go back to the dashboard to create your first collection. I'll take you there in 10 seconds.",
         page: "/organizations/settings",
         position: "center",
         navigateTo: `/${orgSlug}`,
       });
 
       baseSteps.push({
+        id: "create-collection-action",
+        title: "Create Your First Collection",
+        description: "Click the 'Create Collection' button below to get started. Once you create a collection, we'll explore the builder!",
+        targetSelector: "[data-tutorial='create-collection']",
+        page: `/${orgSlug}`,
+        position: "bottom",
+        hideNextButton: true,
+        waitForEvent: "collection-dialog-opened",
+      });
+
+      baseSteps.push({
         id: "dashboard-builder-intro",
         title: "Build Custom Dashboards",
-        description: "Let's first see the dashboard builder where you can create visual dashboards. I'll take you there in 10 seconds.",
+        description: "Great! Now let's see the dashboard builder where you can create visual dashboards. I'll take you there in 10 seconds.",
         page: `/${orgSlug}`,
         position: "center",
         navigateTo: `/${orgSlug}/builder`,
@@ -202,26 +201,6 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         description: "This is the dashboard builder! Here you can drag and drop blocks to create custom dashboards with charts, tables, KPIs, and forms connected to your MongoDB collections.",
         page: `/${orgSlug}/builder`,
         position: "center",
-      });
-
-      baseSteps.push({
-        id: "back-to-create-collection",
-        title: "Let's Create a Collection",
-        description: "Now let's go back to create your first collection. I'll take you to the dashboard in 10 seconds.",
-        page: `/${orgSlug}/builder`,
-        position: "center",
-        navigateTo: `/${orgSlug}`,
-      });
-
-      baseSteps.push({
-        id: "create-collection-action",
-        title: "Create Your First Collection",
-        description: "Click the 'Create Collection' button below. I'll guide you through the creation process.",
-        targetSelector: "[data-tutorial='create-collection']",
-        page: `/${orgSlug}`,
-        position: "bottom",
-        hideNextButton: true,
-        waitForEvent: "collection-dialog-opened",
       });
     }
 

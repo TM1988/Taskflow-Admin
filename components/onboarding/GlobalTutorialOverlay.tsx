@@ -13,6 +13,7 @@ export function GlobalTutorialOverlay() {
   const [mounted, setMounted] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [targetElement, setTargetElement] = useState<Element | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -30,6 +31,34 @@ export function GlobalTutorialOverlay() {
       window.removeEventListener('tutorial-event' as any, handleTutorialEvent as any);
     };
   }, [currentStep, steps]);
+
+  // Update target element when step changes or DOM changes
+  useEffect(() => {
+    if (!mounted || !isActive) return;
+    
+    const step = steps[currentStep];
+    if (!step?.targetSelector) {
+      setTargetElement(null);
+      return;
+    }
+
+    const findElement = () => {
+      const element = document.querySelector(step.targetSelector!);
+      setTargetElement(element);
+    };
+
+    // Find immediately
+    findElement();
+
+    // Also watch for DOM changes to catch dynamically added elements
+    const observer = new MutationObserver(findElement);
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+
+    return () => observer.disconnect();
+  }, [mounted, isActive, currentStep, steps]);
 
   // Start countdown when step has navigateTo (redirect)
   useEffect(() => {
@@ -80,16 +109,10 @@ export function GlobalTutorialOverlay() {
   // Only show if we're on the correct page for this step
   if (step?.page !== pathname) return null;
 
-  const getTargetElement = () => {
-    if (!step.targetSelector) return null;
-    return document.querySelector(step.targetSelector);
-  };
-
   const getHighlightStyle = () => {
-    const element = getTargetElement();
-    if (!element) return null;
+    if (!targetElement) return null;
 
-    const rect = element.getBoundingClientRect();
+    const rect = targetElement.getBoundingClientRect();
     return {
       position: "fixed" as const,
       top: rect.top - 8,
@@ -115,8 +138,7 @@ export function GlobalTutorialOverlay() {
       };
     }
 
-    const element = getTargetElement();
-    if (!element) {
+    if (!targetElement) {
       return {
         position: "fixed" as const,
         top: `${window.innerHeight / 2 - 150}px`,
@@ -126,7 +148,7 @@ export function GlobalTutorialOverlay() {
       };
     }
 
-    const rect = element.getBoundingClientRect();
+    const rect = targetElement.getBoundingClientRect();
     const base: any = {
       position: "fixed" as const,
       zIndex: 10002,
