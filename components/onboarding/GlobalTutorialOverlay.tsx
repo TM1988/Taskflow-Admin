@@ -11,10 +11,54 @@ export function GlobalTutorialOverlay() {
   const { isActive, currentStep, steps, skipTutorial, nextStep, previousStep } = useTutorial();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Start countdown when step has navigateTo (redirect)
+  useEffect(() => {
+    const step = steps[currentStep];
+    if (step?.navigateTo && step.page === pathname) {
+      // Current step will redirect to navigateTo, start 10 second countdown
+      setCountdown(10);
+      setIsNavigating(true);
+    } else {
+      setCountdown(null);
+      setIsNavigating(false);
+    }
+  }, [currentStep, steps, pathname]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+
+    const timer = setTimeout(() => {
+      if (countdown === 1) {
+        // Time's up, proceed automatically
+        handleNext();
+      } else {
+        setCountdown(countdown - 1);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  const handleNext = () => {
+    const step = steps[currentStep];
+    setCountdown(null);
+    setIsNavigating(false);
+    
+    // If current step has navigateTo, navigate there first, then nextStep will be called after navigation
+    if (step?.navigateTo) {
+      nextStep();
+    } else {
+      nextStep();
+    }
+  };
 
   if (!mounted || !isActive || steps.length === 0) return null;
 
@@ -43,8 +87,6 @@ export function GlobalTutorialOverlay() {
       borderRadius: "8px",
       pointerEvents: "none" as const,
       zIndex: 10001,
-      boxShadow: "0 0 0 4px hsl(var(--primary) / 0.2)",
-      animation: "tutorialPulse 2s ease-in-out infinite",
     };
   };
 
@@ -53,10 +95,10 @@ export function GlobalTutorialOverlay() {
       // Center of screen
       return {
         position: "fixed" as const,
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
+        top: `${window.innerHeight / 2 - 150}px`,
+        left: `${window.innerWidth / 2 - 200}px`,
         zIndex: 10002,
+        maxWidth: "400px",
       };
     }
 
@@ -64,10 +106,10 @@ export function GlobalTutorialOverlay() {
     if (!element) {
       return {
         position: "fixed" as const,
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
+        top: `${window.innerHeight / 2 - 150}px`,
+        left: `${window.innerWidth / 2 - 200}px`,
         zIndex: 10002,
+        maxWidth: "400px",
       };
     }
 
@@ -75,43 +117,39 @@ export function GlobalTutorialOverlay() {
     const base: any = {
       position: "fixed" as const,
       zIndex: 10002,
+      maxWidth: "400px",
     };
 
     switch (step.position) {
       case "top":
         return { 
           ...base, 
-          bottom: `${window.innerHeight - rect.top + 20}px`, 
+          top: `${Math.max(20, rect.top - 300)}px`, 
           left: `${Math.max(20, rect.left)}px`,
-          maxWidth: "400px",
         };
       case "bottom":
         return { 
           ...base, 
           top: `${rect.bottom + 20}px`, 
           left: `${Math.max(20, rect.left)}px`,
-          maxWidth: "400px",
         };
       case "left":
         return { 
           ...base, 
-          right: `${window.innerWidth - rect.left + 20}px`, 
           top: `${rect.top}px`,
-          maxWidth: "400px",
+          left: `${Math.max(20, rect.left - 420)}px`,
         };
       case "right":
         return { 
           ...base, 
-          left: `${rect.right + 20}px`, 
           top: `${rect.top}px`,
-          maxWidth: "400px",
+          left: `${rect.right + 20}px`,
         };
       default:
         return { 
           ...base, 
           top: `${rect.bottom + 20}px`, 
           left: `${Math.max(20, rect.left)}px`,
-          maxWidth: "400px",
         };
     }
   };
@@ -120,17 +158,48 @@ export function GlobalTutorialOverlay() {
 
   return (
     <>
-      {/* Overlay backdrop */}
+      {/* Overlay backdrop with cutout for highlighted element */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]"
+        className="fixed inset-0 z-[10000] pointer-events-none"
         style={{ animation: "tutorialFadeIn 0.3s ease-in-out" }}
-      />
+      >
+        {highlightStyle ? (
+          // Create spotlight effect with box-shadow
+          <div
+            style={{
+              position: "absolute",
+              top: highlightStyle.top,
+              left: highlightStyle.left,
+              width: highlightStyle.width,
+              height: highlightStyle.height,
+              borderRadius: highlightStyle.borderRadius,
+              boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.6)",
+              pointerEvents: "none",
+              transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          />
+        ) : (
+          // No target, full overlay
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        )}
+      </div>
 
-      {/* Highlight box around target element */}
-      {highlightStyle && <div style={highlightStyle} />}
+      {/* Highlight border around target element */}
+      {highlightStyle && (
+        <div 
+          style={{
+            ...highlightStyle,
+            boxShadow: "0 0 0 4px hsl(var(--primary) / 0.2), 0 0 20px hsl(var(--primary) / 0.4)",
+            transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+          }} 
+        />
+      )}
 
       {/* Tutorial card */}
-      <Card style={getCardPosition()} className="shadow-2xl max-w-md">
+      <Card style={{
+        ...getCardPosition(),
+        transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      }} className="shadow-2xl max-w-md">
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1 flex-1">
@@ -178,8 +247,8 @@ export function GlobalTutorialOverlay() {
                 />
               ))}
             </div>
-            <Button size="sm" onClick={nextStep}>
-              {currentStep === steps.length - 1 ? "Finish" : "Next"}
+            <Button size="sm" onClick={handleNext}>
+              {currentStep === steps.length - 1 ? "Finish" : isNavigating && countdown ? `Next (${countdown}s)` : "Next"}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
@@ -193,14 +262,6 @@ export function GlobalTutorialOverlay() {
           }
           to {
             opacity: 1;
-          }
-        }
-        @keyframes tutorialPulse {
-          0%, 100% {
-            box-shadow: 0 0 0 4px hsl(var(--primary) / 0.2);
-          }
-          50% {
-            box-shadow: 0 0 0 8px hsl(var(--primary) / 0.1);
           }
         }
       `}</style>

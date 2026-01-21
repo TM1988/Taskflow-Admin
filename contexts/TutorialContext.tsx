@@ -11,6 +11,7 @@ interface TutorialStep {
   targetSelector?: string;
   position?: "top" | "bottom" | "left" | "right" | "center";
   page: string; // The page path where this step should show
+  navigateTo?: string; // Optional page to navigate to after this step
   action?: () => void; // Optional action to perform when reaching this step
   minRole?: "viewer" | "member" | "admin" | "owner"; // Minimum role required to see this step
 }
@@ -97,12 +98,10 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     baseSteps.push({
       id: "demo-intro",
       title: "Dashboard Demo",
-      description: "Let's check out the demo page to see what you can build. I'll take you there now.",
+      description: "Let's check out the demo page to see what you can build. I'll take you there in 10 seconds (or click Next to skip).",
       page: `/${orgSlug}`,
       position: "center",
-      action: () => {
-        setTimeout(() => router.push(`/${orgSlug}/demo`), 500);
-      },
+      navigateTo: `/${orgSlug}/demo`,
     });
 
     baseSteps.push({
@@ -127,12 +126,10 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       baseSteps.push({
         id: "settings-intro",
         title: "Organization Settings",
-        description: "As the owner, you have full control. Let's check out the settings.",
+        description: "As the owner, you have full control. Let's check out the settings in 10 seconds (or click Next to skip).",
         page: `/${orgSlug}/demo`,
         position: "center",
-        action: () => {
-          setTimeout(() => router.push("/organizations/settings"), 500);
-        },
+        navigateTo: "/organizations/settings",
       });
 
       baseSteps.push({
@@ -166,9 +163,6 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }`,
       page: `/${orgSlug}`,
       position: "center",
-      action: () => {
-        setTimeout(() => router.push(`/${orgSlug}`), 500);
-      },
     });
 
     return baseSteps;
@@ -177,12 +171,16 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const startTutorial = () => {
     const steps = defineSteps();
     setAllSteps(steps);
-    setCurrentStep(0);
+    
+    // Restore step if resuming
+    const savedStep = localStorage.getItem("tutorialStep");
+    const stepIndex = savedStep ? parseInt(savedStep, 10) : 0;
+    setCurrentStep(stepIndex);
     setIsActive(true);
     
-    // Navigate to first step's page
-    if (steps[0]?.page) {
-      router.push(steps[0].page);
+    // Navigate to current step's page
+    if (steps[stepIndex]?.page) {
+      router.push(steps[stepIndex].page);
     }
     
     localStorage.setItem("tutorialActive", "true");
@@ -193,26 +191,31 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentStep(0);
     localStorage.setItem("tutorialCompleted", "true");
     localStorage.removeItem("tutorialActive");
+    localStorage.removeItem("tutorialStep");
   };
 
   const nextStep = () => {
+    const currentStepData = allSteps[currentStep];
     const next = currentStep + 1;
+    
     if (next >= allSteps.length) {
       completeTutorial();
       return;
     }
 
     setCurrentStep(next);
-    const step = allSteps[next];
+    const nextStepData = allSteps[next];
     
-    // Execute action if any
-    if (step.action) {
-      step.action();
+    // Save current step to persist across navigation
+    localStorage.setItem("tutorialStep", next.toString());
+    
+    // If current step has navigateTo, navigate there
+    if (currentStepData?.navigateTo) {
+      router.push(currentStepData.navigateTo);
     }
-    
-    // Navigate to step's page if different from current
-    if (step.page && pathname !== step.page) {
-      router.push(step.page);
+    // Otherwise navigate to next step's page if different from current
+    else if (nextStepData.page && pathname !== nextStepData.page) {
+      router.push(nextStepData.page);
     }
   };
 
@@ -234,6 +237,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentStep(0);
     localStorage.setItem("tutorialCompleted", "true");
     localStorage.removeItem("tutorialActive");
+    localStorage.removeItem("tutorialStep");
     
     // Navigate back to dashboard
     if (organization) {
@@ -247,8 +251,11 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const hasCompleted = localStorage.getItem("tutorialCompleted");
       const wasActive = localStorage.getItem("tutorialActive");
       
-      if (wasActive === "true" && !hasCompleted) {
-        // Resume tutorial
+      // Auto-start if never completed before
+      if (!hasCompleted && !isActive) {
+        startTutorial();
+      } else if (wasActive === "true" && !hasCompleted && !isActive) {
+        // Resume tutorial if it was active
         startTutorial();
       }
     }
