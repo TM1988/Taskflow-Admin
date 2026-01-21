@@ -99,9 +99,17 @@ export function CreateCollectionDialog({ onCollectionCreated }: CreateCollection
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (isOpen) {
+        // Dispatch event for tutorial to proceed
+        window.dispatchEvent(new CustomEvent('tutorial-event', { 
+          detail: { eventName: 'collection-dialog-opened' } 
+        }));
+      }
+    }}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" data-tutorial="create-collection">
           <Plus className="h-4 w-4 mr-2" />
           New Collection
         </Button>

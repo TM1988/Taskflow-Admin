@@ -188,6 +188,7 @@ export default function OrganizationSettingsPage() {
         title="Organization Settings"
         description={organization.name}
         icon={<Building2 className="h-6 w-6" />}
+        showBackButton={true}
         backHref={`/${organization.slug}`}
       />
 

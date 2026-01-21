@@ -16,7 +16,20 @@ export function GlobalTutorialOverlay() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    // Listen for custom events from components
+    const handleTutorialEvent = (event: CustomEvent) => {
+      const step = steps[currentStep];
+      if (step?.waitForEvent === event.detail.eventName) {
+        handleNext();
+      }
+    };
+
+    window.addEventListener('tutorial-event' as any, handleTutorialEvent as any);
+    return () => {
+      window.removeEventListener('tutorial-event' as any, handleTutorialEvent as any);
+    };
+  }, [currentStep, steps]);
 
   // Start countdown when step has navigateTo (redirect)
   useEffect(() => {
@@ -225,32 +238,30 @@ export function GlobalTutorialOverlay() {
           <CardDescription className="text-base leading-relaxed">
             {step.description}
           </CardDescription>
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={previousStep}
-              disabled={currentStep === 0}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Previous
-            </Button>
-            <div className="flex gap-1">
-              {steps.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2 w-2 rounded-full transition-all ${
-                    index === currentStep
-                      ? "bg-primary w-4"
-                      : "bg-muted-foreground/30"
-                  }`}
-                />
-              ))}
+          <div className="space-y-3">
+            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+              <div 
+                className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              />
             </div>
-            <Button size="sm" onClick={handleNext}>
-              {currentStep === steps.length - 1 ? "Finish" : isNavigating && countdown ? `Next (${countdown}s)` : "Next"}
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={previousStep}
+                disabled={currentStep === 0}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+              {!step.hideNextButton && (
+                <Button size="sm" onClick={handleNext}>
+                  {currentStep === steps.length - 1 ? "Finish" : isNavigating && countdown ? `Next (${countdown}s)` : "Next"}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

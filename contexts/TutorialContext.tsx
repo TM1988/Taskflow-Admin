@@ -14,6 +14,8 @@ interface TutorialStep {
   navigateTo?: string; // Optional page to navigate to after this step
   action?: () => void; // Optional action to perform when reaching this step
   minRole?: "viewer" | "member" | "admin" | "owner"; // Minimum role required to see this step
+  hideNextButton?: boolean; // Hide the Next button (for steps that wait for user action)
+  waitForEvent?: string; // Event name to wait for before proceeding
 }
 
 interface TutorialContextType {
@@ -186,18 +188,9 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       baseSteps.push({
-        id: "create-collection-action",
-        title: "Create Your First Collection",
-        description: "Collections are where your data lives. Click the 'Create Collection' button to add your first collection.",
-        targetSelector: "[data-tutorial='create-collection']",
-        page: `/${orgSlug}`,
-        position: "bottom",
-      });
-
-      baseSteps.push({
         id: "dashboard-builder-intro",
         title: "Build Custom Dashboards",
-        description: "Now let's create a custom dashboard. I'll take you to the dashboard builder in 10 seconds.",
+        description: "Let's first see the dashboard builder where you can create visual dashboards. I'll take you there in 10 seconds.",
         page: `/${orgSlug}`,
         position: "center",
         navigateTo: `/${orgSlug}/builder`,
@@ -209,6 +202,26 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         description: "This is the dashboard builder! Here you can drag and drop blocks to create custom dashboards with charts, tables, KPIs, and forms connected to your MongoDB collections.",
         page: `/${orgSlug}/builder`,
         position: "center",
+      });
+
+      baseSteps.push({
+        id: "back-to-create-collection",
+        title: "Let's Create a Collection",
+        description: "Now let's go back to create your first collection. I'll take you to the dashboard in 10 seconds.",
+        page: `/${orgSlug}/builder`,
+        position: "center",
+        navigateTo: `/${orgSlug}`,
+      });
+
+      baseSteps.push({
+        id: "create-collection-action",
+        title: "Create Your First Collection",
+        description: "Click the 'Create Collection' button below. I'll guide you through the creation process.",
+        targetSelector: "[data-tutorial='create-collection']",
+        page: `/${orgSlug}`,
+        position: "bottom",
+        hideNextButton: true,
+        waitForEvent: "collection-dialog-opened",
       });
     }
 
