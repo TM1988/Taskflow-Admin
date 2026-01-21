@@ -134,19 +134,81 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       baseSteps.push({
         id: "settings-page",
-        title: "Manage Your Organization",
-        description: "Here you can update organization details, manage members, generate invite codes, and configure advanced settings.",
+        title: "Organization Settings",
+        description: "Here you can manage your organization. Let's explore the different settings tabs.",
         page: "/organizations/settings",
         position: "center",
       });
 
       baseSteps.push({
-        id: "invite-members",
+        id: "general-tab",
+        title: "General Settings",
+        description: "In the General tab, you can change your organization name and URL slug. These are the core identifiers for your organization.",
+        targetSelector: "[data-value='general']",
+        page: "/organizations/settings",
+        position: "bottom",
+      });
+
+      baseSteps.push({
+        id: "invite-tab",
         title: "Invite Team Members",
-        description: "Use the Invite tab to share your organization's invite code with team members. You can also regenerate the code if needed.",
+        description: "Click on the Invite tab to see your organization's invite code. Share this code with team members so they can join.",
         targetSelector: "[data-value='invite']",
         page: "/organizations/settings",
         position: "bottom",
+      });
+
+      baseSteps.push({
+        id: "members-tab",
+        title: "Manage Members",
+        description: "The Members tab shows all users in your organization. You can manage their roles and remove members if needed.",
+        targetSelector: "[data-value='members']",
+        page: "/organizations/settings",
+        position: "bottom",
+      });
+
+      baseSteps.push({
+        id: "danger-zone",
+        title: "Danger Zone",
+        description: "The Advanced tab contains critical actions like deleting your organization. Use these options carefully!",
+        targetSelector: "[data-value='advanced']",
+        page: "/organizations/settings",
+        position: "bottom",
+      });
+
+      baseSteps.push({
+        id: "back-to-dashboard",
+        title: "Back to Dashboard",
+        description: "Now let's go back to the dashboard to create some collections and dashboards. I'll take you there in 10 seconds.",
+        page: "/organizations/settings",
+        position: "center",
+        navigateTo: `/${orgSlug}`,
+      });
+
+      baseSteps.push({
+        id: "create-collection-action",
+        title: "Create Your First Collection",
+        description: "Collections are where your data lives. Click the 'Create Collection' button to add your first collection.",
+        targetSelector: "[data-tutorial='create-collection']",
+        page: `/${orgSlug}`,
+        position: "bottom",
+      });
+
+      baseSteps.push({
+        id: "dashboard-builder-intro",
+        title: "Build Custom Dashboards",
+        description: "Now let's create a custom dashboard. I'll take you to the dashboard builder in 10 seconds.",
+        page: `/${orgSlug}`,
+        position: "center",
+        navigateTo: `/${orgSlug}/builder`,
+      });
+
+      baseSteps.push({
+        id: "builder-page",
+        title: "Dashboard Builder",
+        description: "This is the dashboard builder! Here you can drag and drop blocks to create custom dashboards with charts, tables, KPIs, and forms connected to your MongoDB collections.",
+        page: `/${orgSlug}/builder`,
+        position: "center",
       });
     }
 

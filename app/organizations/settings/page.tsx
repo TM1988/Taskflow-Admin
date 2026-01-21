@@ -194,11 +194,11 @@ export default function OrganizationSettingsPage() {
       <div className="container mx-auto max-w-4xl p-6">
         <Tabs defaultValue="general" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
+            <TabsTrigger value="general" data-value="general">General</TabsTrigger>
+            <TabsTrigger value="members" data-value="members">Members</TabsTrigger>
             <TabsTrigger value="invite" data-value="invite">Invite</TabsTrigger>
             {isOwner && <TabsTrigger value="sso">SSO</TabsTrigger>}
-            {isOwner && <TabsTrigger value="danger">Danger Zone</TabsTrigger>}
+            {isOwner && <TabsTrigger value="danger" data-value="advanced">Danger Zone</TabsTrigger>}
           </TabsList>
 
           {/* General Tab */}
