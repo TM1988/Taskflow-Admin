@@ -64,9 +64,13 @@ export function GlobalTutorialOverlay() {
   useEffect(() => {
     const step = steps[currentStep];
     if (step?.navigateTo && step.page === pathname) {
-      // Current step will redirect to navigateTo, start 10 second countdown
+      // Start countdown - 10 seconds for navigation steps
       setCountdown(10);
       setIsNavigating(true);
+    } else if (step?.id === 'collection-success' && step.page === pathname) {
+      // Special case: 5 second timer for notification step (no navigation)
+      setCountdown(5);
+      setIsNavigating(false);
     } else {
       setCountdown(null);
       setIsNavigating(false);

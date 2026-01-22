@@ -111,6 +111,7 @@ export default function DemoPage() {
         title="Dashboard Preview"
         description="This is how your dashboard will look when integrated into your application"
         icon={<Sparkles className="h-6 w-6" />}
+        showBackButton={true}
         actions={
           <div className="flex items-center gap-2">
             <Button 
@@ -160,10 +161,6 @@ export default function DemoPage() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" size="sm" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
           </div>
         }
       />

@@ -84,40 +84,14 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       },
     ];
 
-    // Demo dashboard (all roles)
-    baseSteps.push({
-      id: "demo-intro",
-      title: "Dashboard Demo",
-      description: "Let's check out the demo page to see what you can build. I'll take you there in 10 seconds (or click Next to skip).",
-      page: `/${orgSlug}`,
-      position: "center",
-      navigateTo: `/${orgSlug}/demo`,
-    });
-
-    baseSteps.push({
-      id: "demo-page",
-      title: "Your Dashboard Preview",
-      description: "This is a preview of the dashboard you can integrate into your app. It shows sample data with KPIs, charts, and tables.",
-      page: `/${orgSlug}/demo`,
-      position: "center",
-    });
-
-    baseSteps.push({
-      id: "integration",
-      title: "Integration Code",
-      description: "Click 'Integration Code' to get the embed code for your app. You can copy and paste it anywhere you want to display this dashboard.",
-      targetSelector: "[data-tutorial='integration-code']",
-      page: `/${orgSlug}/demo`,
-      position: "bottom",
-    });
-
-    // Owner-specific steps
+    // Owner goes through settings first, then creates collection, then sees demo
+    // Non-owners go straight to demo
     if (role === "owner") {
       baseSteps.push({
         id: "settings-intro",
         title: "Organization Settings",
         description: "As the owner, you have full control. Let's check out the settings in 10 seconds (or click Next to skip).",
-        page: `/${orgSlug}/demo`,
+        page: `/${orgSlug}`,
         position: "center",
         navigateTo: "/organizations/settings",
       });
@@ -176,9 +150,9 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       baseSteps.push({
-        id: "create-collection-action",
+        id: "create-collection-button",
         title: "Create Your First Collection",
-        description: "Click the 'Create Collection' button below to get started. Once you create a collection, we'll explore the builder!",
+        description: "Click the 'Create Collection' button to open the dialog.",
         targetSelector: "[data-tutorial='create-collection']",
         page: `/${orgSlug}`,
         position: "bottom",
@@ -187,22 +161,62 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       baseSteps.push({
-        id: "dashboard-builder-intro",
-        title: "Build Custom Dashboards",
-        description: "Great! Now let's see the dashboard builder where you can create visual dashboards. I'll take you there in 10 seconds.",
+        id: "create-collection-form",
+        title: "Fill Out Collection Details",
+        description: "Enter a name for your collection (like 'tasks' or 'projects'), and click Create Collection to finish. I'll automatically continue once you create it!",
+        targetSelector: "[data-tutorial='create-collection-dialog']",
         page: `/${orgSlug}`,
-        position: "center",
-        navigateTo: `/${orgSlug}/builder`,
+        position: "right",
+        hideNextButton: true,
+        waitForEvent: "collection-created",
       });
 
       baseSteps.push({
-        id: "builder-page",
-        title: "Dashboard Builder",
-        description: "This is the dashboard builder! Here you can drag and drop blocks to create custom dashboards with charts, tables, KPIs, and forms connected to your MongoDB collections.",
-        page: `/${orgSlug}/builder`,
+        id: "collection-success",
+        title: "Collection Created Successfully! 🎉",
+        description: "Great! Your collection has been created. let's move on in 5 seconds (or click Next to skip).",
+        targetSelector: "[data-sonner-toast]",
+        page: `/${orgSlug}`,
+        position: "left",
+      });
+
+      baseSteps.push({
+        id: "demo-intro-owner",
+        title: "Let's See the Demo",
+        description: "Now let's check out the demo dashboard to see what you can build with your collections. I'll take you there in 10 seconds (or click Next to skip).",
+        page: `/${orgSlug}`,
         position: "center",
+        navigateTo: `/${orgSlug}/demo`,
+      });
+    } else {
+      // Non-owners go to demo after initial dashboard tour
+      baseSteps.push({
+        id: "demo-intro",
+        title: "Dashboard Demo",
+        description: "Let's check out the demo page to see what you can build. I'll take you there in 10 seconds (or click Next to skip).",
+        page: `/${orgSlug}`,
+        position: "center",
+        navigateTo: `/${orgSlug}/demo`,
       });
     }
+
+    // Demo steps for all roles
+    baseSteps.push({
+      id: "demo-page",
+      title: "Your Dashboard Preview",
+      description: "This is a preview of the dashboard you can integrate into your app. It shows sample data with KPIs, charts, and tables.",
+      page: `/${orgSlug}/demo`,
+      position: "center",
+    });
+
+    baseSteps.push({
+      id: "integration",
+      title: "Integration Code",
+      description: "Click 'Integration Code' to get the embed code for your app. You can copy and paste it anywhere you want to display this dashboard.",
+      targetSelector: "[data-tutorial='integration-code']",
+      page: `/${orgSlug}/demo`,
+      position: "bottom",
+    });
 
     // Final step - back to dashboard
     baseSteps.push({
@@ -215,7 +229,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ? "Start managing your data and collaborating with your team!"
           : "Explore the dashboard and see what your team has built!"
       }`,
-      page: `/${orgSlug}`,
+      page: `/${orgSlug}/demo`,
       position: "center",
     });
 

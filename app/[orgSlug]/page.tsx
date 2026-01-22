@@ -7,11 +7,22 @@ import { useTutorial } from "@/contexts/TutorialContext";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Database, Plus, TrendingUp, Users, Activity, Settings, HelpCircle } from "lucide-react";
+import { Database, Plus, TrendingUp, Users, Activity, Settings, HelpCircle, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CreateCollectionDialog } from "@/components/dashboard/CreateCollectionDialog";
 import Link from "next/link";
 import { getAppUrl } from "@/lib/app-url";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Collection {
   name: string;
@@ -28,11 +39,56 @@ export default function OrganizationDashboardPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { startTutorial } = useTutorial();
+  const { toast } = useToast();
 
   const handleShowTutorial = () => {
     localStorage.removeItem('tutorialCompleted');
     startTutorial();
+  };
+
+  const handleDeleteClick = (collectionName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCollectionToDelete(collectionName);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!collectionToDelete || !organization) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/collections/${collectionToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'x-org-id': organization.id
+        }
+      });
+
+      if (!res.ok) throw new Error('Failed to delete collection');
+
+      toast({
+        title: "Collection deleted",
+        description: `Successfully deleted collection "${collectionToDelete}"`
+      });
+
+      // Refresh collections list
+      fetchCollections();
+    } catch (err: any) {
+      toast({
+        title: "Deletion failed",
+        description: err.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setCollectionToDelete(null);
+    }
   };
 
   useEffect(() => {
@@ -99,14 +155,6 @@ export default function OrganizationDashboardPage() {
               See Demo
             </Button>
             <CreateCollectionDialog onCollectionCreated={fetchCollections} data-tutorial="create-collection" />
-            <Button size="sm" onClick={() => router.push(`/${orgSlug}/builder`)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Dashboard
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => router.push('/organizations/settings')}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Button>
           </>
         }
       />
@@ -198,26 +246,35 @@ export default function OrganizationDashboardPage() {
             ) : (
               <div className="space-y-4">
                 {collections.map((collection) => (
-                  <Link
-                    key={collection.name}
-                    href={`/${orgSlug}/collections/${collection.name}`}
-                  >
-                    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
-                      <div className="flex items-center space-x-4">
-                        <Database className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <h3 className="font-medium">{collection.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {collection.count.toLocaleString()} documents •{' '}
-                            {(collection.size / 1024).toFixed(2)} KB
-                          </p>
+                  <div key={collection.name} className="relative">
+                    <Link href={`/${orgSlug}/collections/${collection.name}`}>
+                      <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
+                        <div className="flex items-center space-x-4">
+                          <Database className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <h3 className="font-medium">{collection.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {collection.count.toLocaleString()} documents •{' '}
+                              {(collection.size / 1024).toFixed(2)} KB
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="secondary" size="sm" className="bg-primary/10 hover:bg-primary/20">
+                            View
+                          </Button>
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            onClick={(e) => handleDeleteClick(collection.name, e)}
+                            className="bg-destructive/20 text-destructive hover:bg-destructive/30 hover:text-destructive border border-destructive/30"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -259,6 +316,28 @@ export default function OrganizationDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the collection "{collectionToDelete}" and all its documents.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete Collection"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

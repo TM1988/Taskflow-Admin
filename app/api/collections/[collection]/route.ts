@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollectionData } from '@/lib/mongodb';
+import clientPromise from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
@@ -57,6 +58,50 @@ export async function GET(
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Failed to fetch collection data' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ collection: string }> }
+) {
+  try {
+    const params = await context.params;
+    const orgId = request.headers.get('x-org-id');
+    
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Organization ID required' },
+        { status: 401 }
+      );
+    }
+
+    // Prefix collection name with org ID
+    const fullCollectionName = `${orgId}_${params.collection}`;
+    
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME || 'taskflow_admin');
+    
+    // Drop the collection
+    await db.collection(fullCollectionName).drop();
+    
+    return NextResponse.json({ 
+      success: true,
+      message: `Collection ${params.collection} deleted successfully` 
+    });
+  } catch (error: any) {
+    // Collection might not exist, which is fine
+    if (error.message && error.message.includes('ns not found')) {
+      return NextResponse.json({ 
+        success: true,
+        message: 'Collection already deleted or does not exist' 
+      });
+    }
+    
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete collection' },
       { status: 500 }
     );
   }

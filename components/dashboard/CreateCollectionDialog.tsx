@@ -81,6 +81,11 @@ export function CreateCollectionDialog({ onCollectionCreated }: CreateCollection
         description: `Successfully created collection "${collectionName}"`
       });
 
+      // Dispatch event for tutorial to proceed
+      window.dispatchEvent(new CustomEvent('tutorial-event', { 
+        detail: { eventName: 'collection-created' } 
+      }));
+
       setCollectionName("");
       setOpen(false);
       
@@ -102,7 +107,7 @@ export function CreateCollectionDialog({ onCollectionCreated }: CreateCollection
     <Dialog open={open} onOpenChange={(isOpen) => {
       setOpen(isOpen);
       if (isOpen) {
-        // Dispatch event for tutorial to proceed
+        // Dispatch event for tutorial to proceed to next step
         window.dispatchEvent(new CustomEvent('tutorial-event', { 
           detail: { eventName: 'collection-dialog-opened' } 
         }));
@@ -114,7 +119,7 @@ export function CreateCollectionDialog({ onCollectionCreated }: CreateCollection
           New Collection
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent data-tutorial="create-collection-dialog">
         <DialogHeader>
           <DialogTitle>Create New Collection</DialogTitle>
           <DialogDescription>
