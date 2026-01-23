@@ -13,11 +13,17 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TableBlock, KPIBlock, ChartBlock, FormBlock } from "@/components/blocks";
-import { PlusCircle, Save, Trash2, Edit, LayoutGrid } from "lucide-react";
+import { PlusCircle, Save, Trash2, Edit, LayoutGrid, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { dashboardService, BlockConfig as ServiceBlockConfig } from "@/services/dashboard/dashboard-service";
@@ -68,10 +74,17 @@ export function DashboardBuilder({ dashboardId, dashboardName = "My Dashboard" }
         });
         if (response.ok) {
           const data = await response.json();
-          setCollections(data.collections?.map((c: any) => c.name) || []);
+          const collectionNames = data.collections?.map((c: any) => c.name) || [];
+          console.log("Fetched collections:", collectionNames);
+          setCollections(collectionNames);
         }
       } catch (err) {
         console.error("Failed to fetch collections", err);
+        toast({
+          title: "Failed to load collections",
+          description: "Could not fetch your collections",
+          variant: "destructive"
+        });
       }
     };
     fetchCollections();
@@ -245,17 +258,32 @@ export function DashboardBuilder({ dashboardId, dashboardName = "My Dashboard" }
     <div className="min-h-screen bg-background">
       <PageHeader
         title={currentDashboardName}
-        description={currentDashboardId ? "Saved dashboard" : "Unsaved dashboard"}
+        description="Drag and drop blocks to build your custom dashboard"
         icon={<LayoutGrid className="h-6 w-6" />}
+        showBackButton={true}
         actions={
           <>
-            <Button 
-              variant={isEditing ? "default" : "outline"}
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditing(!isEditing)}
             >
               <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Editing" : "Locked"}
+              {isEditing ? "Preview" : "Edit"}
             </Button>
+            <Button
+              size="sm"
+              onClick={saveDashboard}
+              disabled={isSaving}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? "Saving..." : "Save Dashboard"}
+            </Button>
+          </>
+        }
+      />
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
                 <Button>
@@ -272,7 +300,25 @@ export function DashboardBuilder({ dashboardId, dashboardName = "My Dashboard" }
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Block Type</Label>
+                  <div className="flex items-center gap-2">
+                    <Label>Block Type</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p className="font-semibold mb-2">Block Types:</p>
+                          <ul className="space-y-1 text-sm">
+                            <li><strong>Table:</strong> Display data in rows and columns</li>
+                            <li><strong>KPI:</strong> Show a single metric (count, sum, avg)</li>
+                            <li><strong>Chart:</strong> Visualize data with bar/line/pie charts</li>
+                            <li><strong>Form:</strong> Add or edit collection documents</li>
+                          </ul>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Select 
                     value={newBlock.type} 
                     onValueChange={(v) => setNewBlock({ ...newBlock, type: v as any })}
@@ -281,10 +327,10 @@ export function DashboardBuilder({ dashboardId, dashboardName = "My Dashboard" }
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="table">Table</SelectItem>
-                      <SelectItem value="kpi">KPI</SelectItem>
-                      <SelectItem value="chart">Chart</SelectItem>
-                      <SelectItem value="form">Form</SelectItem>
+                      <SelectItem value="table">📊 Table - View data in rows</SelectItem>
+                      <SelectItem value="kpi">📈 KPI - Single metric display</SelectItem>
+                      <SelectItem value="chart">📉 Chart - Visual data graphs</SelectItem>
+                      <SelectItem value="form">📝 Form - Add/edit documents</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -296,14 +342,21 @@ export function DashboardBuilder({ dashboardId, dashboardName = "My Dashboard" }
                     onValueChange={(v) => setNewBlock({ ...newBlock, collection: v })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select collection" />
+                      <SelectValue placeholder={collections.length === 0 ? "No collections available" : "Select collection"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {collections.map(col => (
-                        <SelectItem key={col} value={col}>{col}</SelectItem>
-                      ))}
+                      {collections.length === 0 ? (
+                        <SelectItem value="_none" disabled>No collections found</SelectItem>
+                      ) : (
+                        collections.map(col => (
+                          <SelectItem key={col} value={col}>{col}</SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  {collections.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Create a collection first to use blocks</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -376,15 +429,8 @@ export function DashboardBuilder({ dashboardId, dashboardName = "My Dashboard" }
               </div>
             </DialogContent>
           </Dialog>
-          <Button onClick={saveDashboard} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save Dashboard"}
-          </Button>
-          </>
-        }
-      />
+        </div>
 
-      <div className="p-6">
         {/* Dashboard Grid */}
         {blocks.length === 0 ? (
         <Card className="p-12 text-center">

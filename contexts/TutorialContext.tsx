@@ -152,10 +152,10 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       baseSteps.push({
         id: "create-collection-button",
         title: "Create Your First Collection",
-        description: "Click the 'Create Collection' button to open the dialog.",
+        description: "Click the 'New Collection' button in the Collections section below to open the dialog.",
         targetSelector: "[data-tutorial='create-collection']",
         page: `/${orgSlug}`,
-        position: "bottom",
+        position: "left",
         hideNextButton: true,
         waitForEvent: "collection-dialog-opened",
       });

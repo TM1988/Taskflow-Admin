@@ -154,7 +154,10 @@ export default function OrganizationDashboardPage() {
               <TrendingUp className="mr-2 h-4 w-4" />
               See Demo
             </Button>
-            <CreateCollectionDialog onCollectionCreated={fetchCollections} data-tutorial="create-collection" />
+            <Button size="sm" onClick={() => router.push(`/${orgSlug}/builder`)} data-tutorial="edit-dashboard">
+              <Plus className="mr-2 h-4 w-4" />
+              Edit Dashboard
+            </Button>
           </>
         }
       />
@@ -222,10 +225,15 @@ export default function OrganizationDashboardPage() {
         {/* Collections List */}
         <Card className="collections-section">
           <CardHeader>
-            <CardTitle>Your Collections</CardTitle>
-            <CardDescription>
-              Browse and manage your MongoDB collections
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Your Collections</CardTitle>
+                <CardDescription>
+                  Browse and manage your MongoDB collections
+                </CardDescription>
+              </div>
+              <CreateCollectionDialog onCollectionCreated={fetchCollections} data-tutorial="create-collection" />
+            </div>
           </CardHeader>
           <CardContent>
             {error ? (
